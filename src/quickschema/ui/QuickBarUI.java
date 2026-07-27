@@ -2,6 +2,8 @@ package quickschema.ui;
 
 import arc.*;
 import arc.input.KeyCode;
+import arc.scene.Element;
+import arc.scene.event.ElementGestureListener;
 import arc.scene.style.TextureRegionDrawable;
 import arc.scene.ui.Button;
 import arc.scene.ui.ImageButton;
@@ -106,7 +108,18 @@ public class QuickBarUI extends Table {
                         imgBtn.getStyle().imageUp = new TextureRegionDrawable(QuickSlotManager.getSchematicIcon(s));
                     }
                     btn.addListener(new Tooltip(t -> t.background(Tex.pane).add("#" + (index + 1) + ": " + s.name() + "\n(" + s.width + "x" + s.height + ")")));
+                    
+                    // Mouse Right Click (PC)
                     btn.clicked(KeyCode.mouseRight, () -> showSlotMenu(index, s));
+                    
+                    // Touch Long Press / Hold Gesture (Mobile)
+                    btn.addListener(new ElementGestureListener() {
+                        @Override
+                        public boolean longPress(Element element, float x, float y) {
+                            showSlotMenu(index, s);
+                            return true;
+                        }
+                    });
                 } else {
                     // Single '+' Empty slot to add the next schematic
                     Button btn = slotsTable.button(Icon.add, Styles.clearNonei, () -> {

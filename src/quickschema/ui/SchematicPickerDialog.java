@@ -1,19 +1,17 @@
 package quickschema.ui;
 
 import arc.graphics.Color;
-import arc.graphics.Texture;
-import arc.scene.ui.Image;
 import arc.scene.ui.ScrollPane;
 import arc.scene.ui.TextField;
 import arc.scene.ui.layout.Table;
 import arc.struct.Seq;
-import arc.util.Scaling;
 import mindustry.Vars;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 import mindustry.gen.Tex;
 import mindustry.ui.Styles;
 import mindustry.ui.dialogs.BaseDialog;
+import mindustry.world.Block;
 import quickschema.QuickSlotManager;
 
 public class SchematicPickerDialog extends BaseDialog {
@@ -47,7 +45,7 @@ public class SchematicPickerDialog extends BaseDialog {
         }).size(40f);
         cont.add(searchTable).growX().pad(8f).row();
 
-        // Schematic Grid Scroll Pane
+        // Schematic Grid Scroll Pane - Fits Full Screen Width
         Table listTable = new Table();
         listTable.top();
         ScrollPane pane = new ScrollPane(listTable);
@@ -55,7 +53,7 @@ public class SchematicPickerDialog extends BaseDialog {
 
         cont.add(pane).grow().pad(4f).row();
 
-        // Close Button (Only added once)
+        // Close Button
         addCloseButton();
 
         // Populate initially
@@ -93,53 +91,59 @@ public class SchematicPickerDialog extends BaseDialog {
             return;
         }
 
-        // Determine column count based on screen width (matching native Mindustry Schematics Dialog grid)
-        int cols = Vars.mobile ? 3 : 5;
+        // Responsive grid columns across screen width
+        int cols = Vars.mobile ? 4 : 5;
         int colCount = 0;
 
         for (Schematic s : filtered) {
             Table card = new Table();
-            card.background(Tex.pane);
+            card.background(Tex.pane).margin(4f);
 
-            // Card Header Bar (Top buttons & Schematic Name)
+            // Card Header Bar (Info button & Schematic Name)
             Table header = new Table();
             header.background(Tex.button);
-            header.margin(2f);
+            header.margin(3f);
 
-            // Info button
             header.button(Icon.info, Styles.clearNonei, () -> {
                 Vars.ui.schematics.showInfo(s);
-            }).size(28f).padRight(4f);
+            }).size(26f).padRight(4f);
 
-            // Schematic Name label (truncated if long)
             String displayName = s.name();
-            if (displayName.length() > 14) {
-                displayName = displayName.substring(0, 12) + "..";
+            if (displayName.length() > 12) {
+                displayName = displayName.substring(0, 10) + "..";
             }
-            header.add(displayName).ellipsis(true).color(Color.white).fontScale(0.85f).growX().center();
+            header.add(displayName).ellipsis(true).color(Color.white).fontScale(0.8f).growX().center();
 
-            // Slot badge or assign indicator
             int existingSlot = QuickSlotManager.findSlot(s);
             if (existingSlot != -1) {
-                header.add("⭐ S" + (existingSlot + 1)).color(Color.gold).fontScale(0.75f).padLeft(4f);
+                header.add("⭐ S" + (existingSlot + 1)).color(Color.gold).fontScale(0.75f).padLeft(2f);
             }
 
             card.add(header).growX().row();
 
-            // Card Schematic Preview Image (Native Mindustry Schematic Rendering)
-            Table imageHolder = new Table();
-            imageHolder.background(Tex.pane);
+            // Card Icon & Block Composition (Fast, 100% Mobile Texture Compatible)
+            Table iconHolder = new Table();
+            iconHolder.background(Tex.button).margin(6f);
+            iconHolder.image(QuickSlotManager.getSchematicIcon(s)).size(48f).row();
 
-            try {
-                Texture previewTex = Vars.schematics.getPreview(s);
-                Image img = new Image(previewTex);
-                img.setScaling(Scaling.fit);
-                imageHolder.add(img).size(110f).pad(4f);
-            } catch (Throwable t) {
-                imageHolder.image(QuickSlotManager.getSchematicIcon(s)).size(60f).pad(20f);
+            // Top blocks preview row inside schematic
+            Table blocksRow = new Table();
+            blocksRow.left();
+            Seq<Block> uniqueBlocks = new Seq<>();
+            if (s.tiles != null) {
+                for (var tile : s.tiles) {
+                    if (tile.block != null && !uniqueBlocks.contains(tile.block)) {
+                        uniqueBlocks.add(tile.block);
+                        if (uniqueBlocks.size >= 4) break;
+                    }
+                }
             }
+            for (Block b : uniqueBlocks) {
+                blocksRow.image(b.uiIcon).size(16f).padRight(2f);
+            }
+            iconHolder.add(blocksRow).padTop(4f);
 
-            card.add(imageHolder).size(125f).row();
+            card.add(iconHolder).growX().pad(4f).row();
 
             // Card Footer: Dimensions & Tile count
             Table footer = new Table();
@@ -147,15 +151,15 @@ public class SchematicPickerDialog extends BaseDialog {
                 .color(Color.lightGray).fontScale(0.75f).center();
             card.add(footer).pad(2f).row();
 
-            // Click card to select schematic for quick slot
-            listTable.button(btn -> btn.add(card), Styles.cleart, () -> {
+            // Click card button (proper dynamic sizing to avoid card overlapping)
+            listTable.button(btn -> btn.add(card).growX(), Styles.cleart, () -> {
                 boolean success = QuickSlotManager.setSlot(targetSlot, s);
                 if (success) {
                     Vars.ui.showInfoToast("Assigned [" + s.name() + "] to Quick Slot " + (targetSlot + 1), 2f);
                     hide();
                     if (onSelect != null) onSelect.run();
                 }
-            }).size(130f, 165f).pad(4f);
+            }).pad(3f).growX();
 
             colCount++;
             if (colCount % cols == 0) {
