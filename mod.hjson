@@ -2,19 +2,7 @@ displayName: "Quick Schematics"
 name: "quick-schema"
 author: "Seven"
 main: "quickschema.QuickSchemaMod"
-description: """
-Quick Access Favorites Bar for Mindustry Schematics!
-
-Works seamlessly on both PC and Mobile.
-
-Quick Guide:
-• Add Schematics: Tap empty [+] slot or click "Quick Access" inside Mindustry's Schematics dialog.
-• Quick Select: Tap any schematic slot on the HUD bar to equip it instantly for placement.
-• Dynamic Growth: The bar extends dynamically from 1 to 36 slots as you add schematics.
-• Reposition Bar: Tap the [🔄] position button to switch between Top-Right (Under Minimap), Left-Center, and Bottom-Left.
-• Remove / Options: Right-click or long-press any slot to manage or remove it.
-• Clear All: Open "Quick Access" in Schematics dialog to empty all slots at once.
-"""
+description: "Quick Access Favorites Bar for Mindustry Schematics! Works seamlessly on both PC and Mobile."
 version: "1.0"
 minGameVersion: 158
 java: true
