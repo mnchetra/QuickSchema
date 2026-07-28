@@ -76,7 +76,7 @@ public class QuickAccessSlotsDialog extends BaseDialog {
             // Slot Content
             Table body = new Table();
             if (s != null) {
-                body.image(QuickSlotManager.getSchematicIcon(s)).size(40f).padRight(8f);
+                body.image(QuickSlotManager.getSlotIcon(index)).size(40f).padRight(8f);
                 Table info = new Table();
                 info.left();
                 String name = s.name();
@@ -90,12 +90,19 @@ public class QuickAccessSlotsDialog extends BaseDialog {
             }
             card.add(body).pad(6f).growX().row();
 
-            // Click card to edit/assign slot
+            // Click card to manage/assign slot
             grid.button(btn -> btn.add(card).growX(), Styles.flatt, () -> {
-                new SchematicPickerDialog(index, () -> {
-                    if (onUpdate != null) onUpdate.run();
-                    setup();
-                }).show();
+                if (s != null) {
+                    new SchematicPreviewDialog(s, index, () -> {
+                        if (onUpdate != null) onUpdate.run();
+                        setup();
+                    }).show();
+                } else {
+                    new SchematicPickerDialog(index, () -> {
+                        if (onUpdate != null) onUpdate.run();
+                        setup();
+                    }).show();
+                }
             }).size(180f, 90f).pad(6f);
 
             countOnPage++;

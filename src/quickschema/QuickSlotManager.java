@@ -2,6 +2,7 @@ package quickschema;
 
 import arc.*;
 import arc.graphics.g2d.TextureRegion;
+import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
 import arc.util.*;
 import mindustry.*;
@@ -13,12 +14,15 @@ public class QuickSlotManager {
     public static final int MAX_SLOTS = 36;
 
     private static final Seq<Schematic> slots = new Seq<>();
+    private static final Seq<String> slotIcons = new Seq<>();
 
     public static void load() {
         slots.clear();
+        slotIcons.clear();
         int count = Core.settings.getInt("quickschema_slot_count_saved", 0);
         for (int i = 0; i < count && i < MAX_SLOTS; i++) {
             String data = Core.settings.getString("quickschema_slot_" + i, "");
+            String iconKey = Core.settings.getString("quickschema_slot_icon_" + i, "");
             if (!data.isEmpty()) {
                 try {
                     Schematic s = null;
@@ -34,6 +38,7 @@ public class QuickSlotManager {
                     }
                     if (s != null && !contains(s)) {
                         slots.add(s);
+                        slotIcons.add(iconKey);
                     }
                 } catch (Throwable t) {
                     Log.err("Failed to load QuickSchema slot @", i, t);
@@ -47,6 +52,7 @@ public class QuickSlotManager {
         for (int i = 0; i < MAX_SLOTS; i++) {
             if (i < slots.size) {
                 Schematic s = slots.get(i);
+                String iconKey = i < slotIcons.size ? slotIcons.get(i) : "";
                 if (s.file != null) {
                     Core.settings.put("quickschema_slot_" + i, "file:" + s.file.name());
                 } else if (s.name() != null && !s.name().isEmpty()) {
@@ -59,8 +65,10 @@ public class QuickSlotManager {
                         Core.settings.put("quickschema_slot_" + i, "");
                     }
                 }
+                Core.settings.put("quickschema_slot_icon_" + i, iconKey);
             } else {
                 Core.settings.put("quickschema_slot_" + i, "");
+                Core.settings.put("quickschema_slot_icon_" + i, "");
             }
         }
     }
@@ -100,6 +108,9 @@ public class QuickSlotManager {
             slots.set(index, schematic);
         } else if (index >= slots.size && slots.size < MAX_SLOTS) {
             slots.add(schematic);
+            while (slotIcons.size < slots.size) {
+                slotIcons.add("");
+            }
         }
         save();
         return true;
@@ -108,12 +119,16 @@ public class QuickSlotManager {
     public static void clearSlot(int index) {
         if (index >= 0 && index < slots.size) {
             slots.remove(index);
+            if (index < slotIcons.size) {
+                slotIcons.remove(index);
+            }
             save();
         }
     }
 
     public static void clearAll() {
         slots.clear();
+        slotIcons.clear();
         save();
     }
 
@@ -132,6 +147,7 @@ public class QuickSlotManager {
         }
 
         slots.add(schematic);
+        slotIcons.add("");
         save();
         return true;
     }
@@ -152,11 +168,85 @@ public class QuickSlotManager {
         return findSlot(schematic) != -1;
     }
 
+    public static void setSlotIconKey(int index, String iconKey) {
+        while (slotIcons.size <= index) {
+            slotIcons.add("");
+        }
+        slotIcons.set(index, iconKey == null ? "" : iconKey);
+        save();
+    }
+
+    public static String getSlotIconKey(int index) {
+        if (index >= 0 && index < slotIcons.size) {
+            return slotIcons.get(index);
+        }
+        return "";
+    }
+
+    public static TextureRegion getSlotIcon(int index) {
+        Schematic s = getSlot(index);
+        if (s == null) return Icon.copy.getRegion();
+
+        String key = getSlotIconKey(index);
+        if (!key.isEmpty()) {
+            TextureRegion custom = parseIconKey(key);
+            if (custom != null && custom.found()) {
+                return custom;
+            }
+        }
+
+        return getSchematicIcon(s);
+    }
+
+    public static TextureRegion parseIconKey(String key) {
+        if (key == null || key.isEmpty() || key.equals("auto")) return null;
+        try {
+            if (key.startsWith("block:")) {
+                var b = Vars.content.block(key.substring(6));
+                if (b != null) return b.uiIcon;
+            } else if (key.startsWith("item:")) {
+                var item = Vars.content.item(key.substring(5));
+                if (item != null) return item.uiIcon;
+            } else if (key.startsWith("liquid:")) {
+                var liq = Vars.content.liquid(key.substring(7));
+                if (liq != null) return liq.uiIcon;
+            } else if (key.startsWith("icon:")) {
+                String iconName = key.substring(5);
+                return getIconByName(iconName);
+            }
+        } catch (Throwable t) {
+            Log.err("Error parsing icon key: " + key, t);
+        }
+        return null;
+    }
+
+    public static TextureRegion getIconByName(String name) {
+        try {
+            var field = Icon.class.getField(name);
+            Object val = field.get(null);
+            if (val instanceof TextureRegionDrawable) {
+                return ((TextureRegionDrawable) val).getRegion();
+            }
+        } catch (Throwable ignored) {}
+        return null;
+    }
+
     public static TextureRegion getSchematicIcon(Schematic s) {
         if (s == null) return Icon.copy.getRegion();
         try {
-            if (s.tiles != null && s.tiles.size > 0 && s.tiles.first().block != null) {
-                return s.tiles.first().block.uiIcon;
+            if (s.tiles != null && s.tiles.size > 0) {
+                mindustry.world.Block bestBlock = null;
+                for (var tile : s.tiles) {
+                    if (tile == null || tile.block == null) continue;
+                    mindustry.world.Block b = tile.block;
+                    if (bestBlock == null) bestBlock = b;
+                    if (b instanceof mindustry.world.blocks.storage.CoreBlock || b.hasItems || b.hasPower || b.synthetic()) {
+                        bestBlock = b;
+                    }
+                }
+                if (bestBlock != null && bestBlock.uiIcon != null && bestBlock.uiIcon.found()) {
+                    return bestBlock.uiIcon;
+                }
             }
         } catch (Throwable t) {
             Log.err("Error getting schematic icon", t);

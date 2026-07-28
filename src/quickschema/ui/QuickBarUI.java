@@ -54,9 +54,6 @@ public class QuickBarUI extends Table {
             setup();
         }).size(40f).pad(2f);
 
-        // Header Title Icon
-        image(Icon.copy).size(22f).pad(2f);
-
         if (!collapsed) {
             slotsTable.clear();
             slotsTable.defaults().pad(2f);
@@ -105,9 +102,19 @@ public class QuickBarUI extends Table {
 
                     if (btn instanceof ImageButton) {
                         ImageButton imgBtn = (ImageButton) btn;
-                        imgBtn.getStyle().imageUp = new TextureRegionDrawable(QuickSlotManager.getSchematicIcon(s));
+                        imgBtn.getStyle().imageUp = new TextureRegionDrawable(QuickSlotManager.getSlotIcon(index));
                     }
-                    btn.addListener(new Tooltip(t -> t.background(Tex.pane).add("#" + (index + 1) + ": " + s.name() + "\n(" + s.width + "x" + s.height + ")")));
+
+                    // Rich Tooltip with Schematic Image Preview
+                    btn.addListener(new Tooltip(t -> {
+                        t.background(Tex.pane).margin(6f);
+                        t.add("#" + (index + 1) + ": " + s.name()).color(arc.graphics.Color.gold).padBottom(2f).row();
+                        try {
+                            t.add(new mindustry.ui.dialogs.SchematicsDialog.SchematicImage(s)).size(150f).pad(2f).row();
+                        } catch (Throwable ignored) {}
+                        t.add(s.width + "x" + s.height + " | " + (s.tiles != null ? s.tiles.size : 0) + " tiles")
+                         .color(arc.graphics.Color.lightGray).fontScale(0.85f);
+                    }));
                     
                     // Mouse Right Click (PC)
                     btn.clicked(KeyCode.mouseRight, () -> showSlotMenu(index, s));
@@ -198,9 +205,20 @@ public class QuickBarUI extends Table {
 
     private void showSlotMenu(int index, Schematic s) {
         BaseDialog dialog = new BaseDialog("Slot " + (index + 1) + ": " + s.name());
+
         dialog.cont.button("⚡ Select Schematic", () -> {
             selectSchematic(s);
             dialog.hide();
+        }).size(220f, 48f).pad(4f).row();
+
+        dialog.cont.button("👁️ Preview Schematic", () -> {
+            dialog.hide();
+            new SchematicPreviewDialog(s, index, this::setup).show();
+        }).size(220f, 48f).pad(4f).row();
+
+        dialog.cont.button("🎨 Change Icon", () -> {
+            dialog.hide();
+            new IconPickerDialog(index, this::setup).show();
         }).size(220f, 48f).pad(4f).row();
 
         dialog.cont.button("🔄 Replace Schematic", () -> {
