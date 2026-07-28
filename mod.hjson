@@ -2,8 +2,8 @@ displayName: "Quick Schematics"
 name: "quick-schema"
 author: "Seven"
 main: "quickschema.QuickSchemaMod"
-description: "Quick Access Favorites Bar for Mindustry Schematics! Works seamlessly on both PC and Mobile. If there an issue leave it on github."
+description: "Quick Access Favorites Bar for Mindustry Schematics! Works seamlessly on both PC and Mobile. If there an issue leave it on github.
+"
 version: "1.1"
 minGameVersion: 158
 java: true
-hidden: true
