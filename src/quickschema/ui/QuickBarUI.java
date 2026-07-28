@@ -139,15 +139,15 @@ public class QuickBarUI extends Table {
 
             // Quick "+ Held" button
             Button addCurrentBtn = slotsTable.button(Icon.star, Styles.clearNonei, () -> {
-                Schematic held = Vars.control.input.lastSchematic;
+                Schematic held = QuickSlotManager.getCurrentlyHeldSchematic();
                 if (held != null) {
                     boolean added = QuickSlotManager.addSchematic(held);
                     if (added) {
-                        Vars.ui.showInfoToast("Added to Quick Access!", 2f);
+                        Vars.ui.showInfoToast("Added [" + held.name() + "] to Quick Access!", 2f);
                         setup();
                     }
                 } else {
-                    Vars.ui.showInfoToast("No schematic currently copied/held", 2f);
+                    Vars.ui.showInfoToast("No schematic currently copied/held in hand", 2f);
                 }
             }).size(44f).get();
             addCurrentBtn.addListener(new Tooltip(t -> t.background(Tex.pane).add("Add Currently Copied Schematic")));
@@ -181,7 +181,7 @@ public class QuickBarUI extends Table {
     }
 
     private void handleEmptySlotClick(int index) {
-        Schematic held = Vars.control.input.lastSchematic;
+        Schematic held = QuickSlotManager.getCurrentlyHeldSchematic();
         if (held != null) {
             BaseDialog choice = new BaseDialog("Add Quick Schematic");
             choice.cont.add("Choose schematic to add:").pad(10f).row();

@@ -4,8 +4,10 @@ import arc.*;
 import arc.graphics.g2d.TextureRegion;
 import arc.scene.style.TextureRegionDrawable;
 import arc.struct.Seq;
+import arc.struct.StringMap;
 import arc.util.*;
 import mindustry.*;
+import mindustry.entities.units.BuildPlan;
 import mindustry.game.Schematic;
 import mindustry.gen.Icon;
 
@@ -166,6 +168,52 @@ public class QuickSlotManager {
 
     public static boolean contains(Schematic schematic) {
         return findSlot(schematic) != -1;
+    }
+
+    public static Schematic getCurrentlyHeldSchematic() {
+        if (Vars.control == null || Vars.control.input == null) return null;
+
+        // 1. Explicit lastSchematic stored by Mindustry
+        if (Vars.control.input.lastSchematic != null) {
+            return Vars.control.input.lastSchematic;
+        }
+
+        // 2. Active build plans selected/held in hand
+        try {
+            Seq<BuildPlan> plans = Vars.control.input.selectPlans;
+            if (plans != null && plans.size > 0) {
+                int minX = Integer.MAX_VALUE, minY = Integer.MAX_VALUE;
+                int maxX = Integer.MIN_VALUE, maxY = Integer.MIN_VALUE;
+
+                for (BuildPlan plan : plans) {
+                    if (plan == null || plan.block == null) continue;
+                    minX = Math.min(minX, plan.x);
+                    minY = Math.min(minY, plan.y);
+                    maxX = Math.max(maxX, plan.x + plan.block.size - 1);
+                    maxY = Math.max(maxY, plan.y + plan.block.size - 1);
+                }
+
+                if (minX <= maxX && minY <= maxY) {
+                    Seq<Schematic.Stile> stiles = new Seq<>();
+                    for (BuildPlan plan : plans) {
+                        if (plan == null || plan.block == null) continue;
+                        stiles.add(new Schematic.Stile(plan.block, plan.x - minX, plan.y - minY, plan.config, (byte) plan.rotation));
+                    }
+                    int width = maxX - minX + 1;
+                    int height = maxY - minY + 1;
+                    StringMap tags = new StringMap();
+                    tags.put("name", "Copied " + stiles.size + "b (" + width + "x" + height + ")");
+
+                    Schematic created = new Schematic(stiles, tags, width, height);
+                    Vars.control.input.lastSchematic = created;
+                    return created;
+                }
+            }
+        } catch (Throwable t) {
+            Log.err("Error getting currently held schematic", t);
+        }
+
+        return null;
     }
 
     public static void setSlotIconKey(int index, String iconKey) {

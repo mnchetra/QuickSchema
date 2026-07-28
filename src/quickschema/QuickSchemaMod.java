@@ -39,7 +39,7 @@ public class QuickSchemaMod extends Mod {
                 if (Vars.ui != null && Vars.ui.schematics != null) {
                     try {
                         Vars.ui.schematics.buttons.button("⭐ Quick Access", Icon.star, () -> {
-                            Schematic held = Vars.control.input.lastSchematic;
+                            Schematic held = QuickSlotManager.getCurrentlyHeldSchematic();
                             if (held != null) {
                                 boolean added = QuickSlotManager.addSchematic(held);
                                 if (added) {

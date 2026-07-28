@@ -105,7 +105,7 @@ public class SchematicPickerDialog extends BaseDialog {
             header.margin(3f);
 
             header.button(Icon.info, Styles.clearNonei, () -> {
-                Vars.ui.schematics.showInfo(s);
+                new SchematicPreviewDialog(s, -1, onSelect).show();
             }).size(26f).padRight(4f);
 
             String displayName = s.name();
