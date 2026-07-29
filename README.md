@@ -36,6 +36,19 @@ A Mindustry Java mod that introduces a customizable, floating **Quick Access HUD
 
 ---
 
+## 🆕 What's New in v1.2
+
+### 🐛 Bug Fixes:
+- **Unknown/Unnamed Schematic Persistence**: Fixed an issue where schematics with default `"unknown"` names, missing tags, or in-game copied selections were lost when closing and re-opening the game. Schematics without library files are now serialized cleanly using Base64.
+- **Duplicate Collision Fix for Unnamed Schematics**: Improved schematic slot comparison (`isSameSchematic`) to perform deep tile structure checks, preventing unnamed or copied schematics of the same size from falsely colliding as duplicates.
+
+### ✨ New Features & UX Enhancements:
+- **Instant 1-Step Mobile Preview**: Long-pressing a slot on Mobile (or right-clicking on PC) now opens the **Schematic Preview Dialog** directly in 1 single step, displaying a full visual layout, tile counts, and item build costs.
+- **All-in-One Preview & Slot Management**: Added a `🔄 Replace` button directly inside the Schematic Preview Dialog alongside `⚡ Select & Use`, `🎨 Icon`, and `❌ Clear`.
+- **Improved Mobile Picker UX**: Enlarged info button touch targets (34px) and added long-press gesture support on schematic library cards to instantly preview any schematic before assigning it.
+
+---
+
 ## 🛠️ Building & Installation
 
 ### Building for Desktop Testing

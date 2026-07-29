@@ -134,6 +134,11 @@ public class SchematicPreviewDialog extends BaseDialog {
                 }).show();
             }).size(110f, 50f).pad(4f);
 
+            buttons.button("🔄 Replace", Icon.refresh, Styles.cleart, () -> {
+                hide();
+                new SchematicPickerDialog(slotIndex, onUpdate).show();
+            }).size(110f, 50f).pad(4f);
+
             buttons.button("❌ Clear", Icon.cancel, Styles.cleart, () -> {
                 QuickSlotManager.clearSlot(slotIndex);
                 if (onUpdate != null) onUpdate.run();

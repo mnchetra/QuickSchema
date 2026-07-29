@@ -38,7 +38,7 @@ public class QuickSlotManager {
                         String b64 = data.substring(4);
                         s = Vars.schematics.readBase64(b64);
                     }
-                    if (s != null && !contains(s)) {
+                    if (s != null) {
                         slots.add(s);
                         slotIcons.add(iconKey);
                     }
@@ -55,18 +55,26 @@ public class QuickSlotManager {
             if (i < slots.size) {
                 Schematic s = slots.get(i);
                 String iconKey = i < slotIcons.size ? slotIcons.get(i) : "";
-                if (s.file != null) {
-                    Core.settings.put("quickschema_slot_" + i, "file:" + s.file.name());
-                } else if (s.name() != null && !s.name().isEmpty()) {
-                    Core.settings.put("quickschema_slot_" + i, "name:" + s.name());
-                } else {
-                    try {
-                        String b64 = Vars.schematics.writeBase64(s);
-                        Core.settings.put("quickschema_slot_" + i, "b64:" + b64);
-                    } catch (Throwable t) {
-                        Core.settings.put("quickschema_slot_" + i, "");
+                String saveData = "";
+                if (s != null) {
+                    if (s.file != null && Vars.schematics.all().find(sc -> sc.file != null && sc.file.name().equals(s.file.name())) != null) {
+                        saveData = "file:" + s.file.name();
+                    } else if (s.name() != null && !s.name().isEmpty() 
+                            && !s.name().equalsIgnoreCase("unknown") 
+                            && !s.name().startsWith("Copied ")
+                            && Vars.schematics.all().find(sc -> sc.name().equals(s.name())) != null) {
+                        saveData = "name:" + s.name();
+                    } else {
+                        try {
+                            String b64 = Vars.schematics.writeBase64(s);
+                            saveData = "b64:" + b64;
+                        } catch (Throwable t) {
+                            Log.err("Failed to write base64 for QuickSchema slot " + i, t);
+                            saveData = "";
+                        }
                     }
                 }
+                Core.settings.put("quickschema_slot_" + i, saveData);
                 Core.settings.put("quickschema_slot_icon_" + i, iconKey);
             } else {
                 Core.settings.put("quickschema_slot_" + i, "");
@@ -154,14 +162,46 @@ public class QuickSlotManager {
         return true;
     }
 
+    public static boolean isSameSchematic(Schematic a, Schematic b) {
+        if (a == b) return true;
+        if (a == null || b == null) return false;
+
+        if (a.file != null && b.file != null) {
+            return a.file.name().equals(b.file.name());
+        }
+
+        String nameA = a.name();
+        String nameB = b.name();
+        boolean validNameA = nameA != null && !nameA.isEmpty() && !nameA.equalsIgnoreCase("unknown") && !nameA.startsWith("Copied ");
+        boolean validNameB = nameB != null && !nameB.isEmpty() && !nameB.equalsIgnoreCase("unknown") && !nameB.startsWith("Copied ");
+
+        if (validNameA && validNameB) {
+            return nameA.equals(nameB) && a.width == b.width && a.height == b.height;
+        }
+
+        if (a.width != b.width || a.height != b.height) return false;
+        if (a.tiles == null || b.tiles == null) return a.tiles == b.tiles;
+        if (a.tiles.size != b.tiles.size) return false;
+
+        for (int i = 0; i < a.tiles.size; i++) {
+            Schematic.Stile t1 = a.tiles.get(i);
+            Schematic.Stile t2 = b.tiles.get(i);
+            if (t1.block != t2.block || t1.x != t2.x || t1.y != t2.y || t1.rotation != t2.rotation) {
+                return false;
+            }
+            if (t1.config != null ? !t1.config.equals(t2.config) : t2.config != null) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     public static int findSlot(Schematic schematic) {
         if (schematic == null) return -1;
         for (int i = 0; i < slots.size; i++) {
             Schematic s = slots.get(i);
-            if (s == null) continue;
-            if (s == schematic) return i;
-            if (s.file != null && schematic.file != null && s.file.name().equals(schematic.file.name())) return i;
-            if (s.name() != null && s.name().equals(schematic.name()) && s.width == schematic.width && s.height == schematic.height) return i;
+            if (isSameSchematic(s, schematic)) return i;
         }
         return -1;
     }

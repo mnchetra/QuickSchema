@@ -106,7 +106,7 @@ public class SchematicPickerDialog extends BaseDialog {
 
             header.button(Icon.info, Styles.clearNonei, () -> {
                 new SchematicPreviewDialog(s, -1, onSelect).show();
-            }).size(26f).padRight(4f);
+            }).size(34f).padRight(4f);
 
             String displayName = s.name();
             if (displayName.length() > 12) {
@@ -151,15 +151,23 @@ public class SchematicPickerDialog extends BaseDialog {
                 .color(Color.lightGray).fontScale(0.75f).center();
             card.add(footer).pad(2f).row();
 
-            // Click card button (proper dynamic sizing to avoid card overlapping)
-            listTable.button(btn -> btn.add(card).growX(), Styles.cleart, () -> {
+            // Click card to assign, long-press card to preview directly on Mobile
+            var cardBtn = listTable.button(btn -> btn.add(card).growX(), Styles.cleart, () -> {
                 boolean success = QuickSlotManager.setSlot(targetSlot, s);
                 if (success) {
                     Vars.ui.showInfoToast("Assigned [" + s.name() + "] to Quick Slot " + (targetSlot + 1), 2f);
                     hide();
                     if (onSelect != null) onSelect.run();
                 }
-            }).pad(3f).growX();
+            }).pad(3f).growX().get();
+
+            cardBtn.addListener(new arc.scene.event.ElementGestureListener() {
+                @Override
+                public boolean longPress(arc.scene.Element element, float x, float y) {
+                    new SchematicPreviewDialog(s, -1, onSelect).show();
+                    return true;
+                }
+            });
 
             colCount++;
             if (colCount % cols == 0) {

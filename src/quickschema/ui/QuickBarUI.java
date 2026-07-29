@@ -116,14 +116,13 @@ public class QuickBarUI extends Table {
                          .color(arc.graphics.Color.lightGray).fontScale(0.85f);
                     }));
                     
-                    // Mouse Right Click (PC)
-                    btn.clicked(KeyCode.mouseRight, () -> showSlotMenu(index, s));
+                    // Mouse Right Click (PC) & Touch Long Press (Mobile) directly opens visual preview & slot controls
+                    btn.clicked(KeyCode.mouseRight, () -> new SchematicPreviewDialog(s, index, this::setup).show());
                     
-                    // Touch Long Press / Hold Gesture (Mobile)
                     btn.addListener(new ElementGestureListener() {
                         @Override
                         public boolean longPress(Element element, float x, float y) {
-                            showSlotMenu(index, s);
+                            new SchematicPreviewDialog(s, index, QuickBarUI.this::setup).show();
                             return true;
                         }
                     });
